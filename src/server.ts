@@ -33,6 +33,19 @@ const initializeDatabase = async () => {
       )
     `);
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS logs(
+        id SERIAL PRIMARY KEY,
+        table_name VARCHAR(25) NOT NULL,
+        old_data JSONB,
+        new_data JSONB,
+        user_id INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL,
+        updated_at TIMESTAMP NOT NULL,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      )
+    `);
+
     console.log('Database tables initialized');
   } catch (error) {
     console.error('Database initialization failed:', error);

@@ -14,10 +14,18 @@ export class UserRepository extends BaseRepository<User> {
     `;
     const values = [user.name, user.email];
     const result: QueryResult = await pool.query(query, values);
-    return result.rows[0] as User;
+
+    var createdUser: User = result.rows[0] as User;
+
+    await this.logChanges({}, createdUser, createdUser.id as number);
+
+    return createdUser;
   }
   
   async update(id: number, user: User): Promise<User | null> {
+
+    const oldUser: User | null = await this.findById(id);
+
     const query = `
       UPDATE users 
       SET name = $1, email = $2, updated_at = NOW() 
@@ -26,7 +34,14 @@ export class UserRepository extends BaseRepository<User> {
     `;
     const values = [user.name, user.email, id];
     const result: QueryResult = await pool.query(query, values);
-    return result.rows.length ? result.rows[0] as User : null;
+
+    var updatedUser: User | null = result.rows.length ? result.rows[0] as User : null;
+
+    if (updatedUser) {
+      await this.logChanges(oldUser, updatedUser, updatedUser.id as number);
+    }
+
+    return updatedUser;
   }
   
   async findByEmail(email: string): Promise<User | null> {
