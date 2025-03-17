@@ -1,3 +1,5 @@
+// better use constructor and class
+
 export interface Car {
   id?: number;
   model: string;
