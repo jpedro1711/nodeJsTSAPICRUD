@@ -22,6 +22,16 @@ const initializeDatabase = async () => {
     `);
 
     await pool.query(`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS password VARCHAR(255);
+    `);
+
+    await pool.query(`
+      ALTER TABLE users
+        ADD COLUMN IF NOT EXISTS role VARCHAR(50) NOT NULL DEFAULT 'user';
+    `);
+
+    await pool.query(`
       CREATE TABLE IF NOT EXISTS cars(
         id SERIAL PRIMARY KEY,
         model VARCHAR(100) NOT NULL,
@@ -62,4 +72,4 @@ const startServer = async () => {
   });
 };
 
-startServer(); 
+startServer().then(r => console.log("Server started"));
