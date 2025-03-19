@@ -4,6 +4,7 @@ import {User} from "../models/user.model";
 import bcrypt from 'bcrypt';
 import {UserRole} from "../models/user.roles";
 import jwt from 'jsonwebtoken';
+import {AuthRequest} from "../middlewares/authMiddleware";
 
 export class AuthController {
     private userRepository: UserRepository;
@@ -73,4 +74,14 @@ export class AuthController {
             token
         });
     };
+
+    getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
+        if (!req.user) {
+            res.status(401).json({ message: "User not authenticated" });
+            return;
+        }
+
+        res.status(200).json({ user: req.user });
+    };
+
 }

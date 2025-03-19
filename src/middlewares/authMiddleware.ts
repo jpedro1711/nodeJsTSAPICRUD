@@ -1,7 +1,7 @@
 import {NextFunction, Request, Response} from 'express';
 import jwt, {JwtPayload} from 'jsonwebtoken';
 
-interface AuthRequest extends Request {
+export interface AuthRequest extends Request {
     user?: any;
 }
 
@@ -21,3 +21,4 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
         return res.status(403).json({ message: 'Invalid token' });
     }
 };
+
