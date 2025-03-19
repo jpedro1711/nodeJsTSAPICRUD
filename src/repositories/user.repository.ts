@@ -10,11 +10,11 @@ export class UserRepository extends BaseRepository<User> {
   
   async create(user: User): Promise<User> {
     const query = `
-      INSERT INTO users (name, email, created_at, updated_at) 
-      VALUES ($1, $2, NOW(), NOW()) 
+      INSERT INTO users (name, email, password, created_at, updated_at) 
+      VALUES ($1, $2, $3, NOW(), NOW()) 
       RETURNING *
     `;
-    const values = [user.name, user.email];
+    const values = [user.name, user.email, user.password];
     const result: QueryResult = await pool.query(query, values);
 
     var createdUser: User = result.rows[0] as User;
@@ -75,7 +75,9 @@ export class UserRepository extends BaseRepository<User> {
       user: {
         id: result.rows[0].user_id,
         name: result.rows[0].name,
-        email: result.rows[0].email
+        email: result.rows[0].email,
+        password: result.rows[0].password,
+        role: result.rows[0].role
       },
       cars: result.rows[0].cars
     };
