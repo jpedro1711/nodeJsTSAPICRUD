@@ -1,78 +1,54 @@
 import {UserRepository} from "../repositories/user.repository";
-import { Request, Response } from 'express';
-import {User} from "../models/user.model";
-import bcrypt from 'bcrypt';
-import {UserRole} from "../models/user.roles";
-import jwt from 'jsonwebtoken';
+import {NextFunction, Request, Response} from 'express';
 import {AuthRequest} from "../middlewares/authMiddleware";
+import {AppException} from "../Exceptions/AppException";
+import {AuthService} from "../services/AuthService";
+import {LoginOrRegistrationRequest} from "../models/Requests/LoginOrRegistrationRequest";
+import {ExceptionMessage} from "../Resources/ExceptionMessages/ExceptionMessages";
+import {ResponseMessage} from "../Resources/SucessMessages/ResponseMessage";
 
 export class AuthController {
-    private userRepository: UserRepository;
+    private authService: AuthService;
 
     constructor() {
-        this.userRepository = new UserRepository();
+        this.authService = new AuthService(new UserRepository());
     }
 
-    signUp = async (req: Request, res: Response): Promise<void> => {
-        const { email, password } = req.body;
+    signUp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        const request = new LoginOrRegistrationRequest(req.body.email, req.body.password);
 
-        if (!email || !password) {
-            res.status(400).json({ message: 'userName and password are required' });
-            return;
+        if (!request.validate()) {
+            next(new AppException(ExceptionMessage.AuthValidationError, 400));
         }
 
-        const userExists : User | null = await this.userRepository.findByEmail(email);
+        try {
+            await this.authService.register(request.email, request.password);
 
-        if (userExists != null) {
-            res.status(400).json({ message: 'user already exists with this e-mail address' });
-            return;
+            res.status(201).json({ message: ResponseMessage.CreatedSuccesfully, success: true });
+        } catch (error) {
+            next(error);
         }
-
-        const hashedPassword: string = await bcrypt.hash(password, 10);
-
-        const user: User = {
-            name: email,
-            password: hashedPassword,
-            email: email,
-            role: UserRole.USER,
-        }
-
-        const created: User = await this.userRepository.create(user);
-
-        res.status(201).json({ message: `created user with username ${created.email}` });
     }
 
-    login = async (req: Request, res: Response): Promise<void> => {
-        const { email, password } = req.body;
+    login = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+        const request = new LoginOrRegistrationRequest(req.body.email, req.body.password);
 
-        if (!email || !password) {
+        if (!request.validate()) {
             res.status(400).json({ message: 'Email and password are required' });
             return;
         }
 
-        const user: User | null = await this.userRepository.findByEmail(email);
+        try {
+            const token: string = await this.authService.login(request.email, request.password);
 
-        if (!user) {
-            res.status(401).json({ message: 'Invalid credentials' });
-            return;
+            res.status(200).json({
+                message: 'Login successful',
+                success: true,
+                token: token
+            });
+        } catch (error) {
+            next(error);
         }
-
-        const isPasswordValid = await bcrypt.compare(password, user.password);
-        if (!isPasswordValid) {
-            res.status(401).json({ message: 'Invalid credentials' });
-            return;
-        }
-
-        const token = jwt.sign(
-            { id: user.id, email: user.email, role: user.role },
-            process.env.JWT_SECRET as string,
-            { expiresIn: '1h' }
-        );
-
-        res.status(200).json({
-            message: 'Login successful',
-            token
-        });
     };
 
     getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -81,7 +57,7 @@ export class AuthController {
             return;
         }
 
-        res.status(200).json({ user: req.user });
+        res.status(200).json({ user: req.user, success: true });
     };
 
 }

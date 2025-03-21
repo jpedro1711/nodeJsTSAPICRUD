@@ -115,7 +115,7 @@ export class UserController {
   deleteUser = async (req: Request, res: Response): Promise<void> => {
     try {
       const id = parseInt(req.params.id);
-      const deleted = await this.userRepository.delete(id);
+      await this.userRepository.delete(id);
       
       res.status(200);
     } catch (error) {

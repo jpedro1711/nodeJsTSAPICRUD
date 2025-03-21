@@ -3,14 +3,11 @@ import { pool } from './config/db.config';
 
 const PORT = process.env.PORT || 3000;
 
-// Database initialization
 const initializeDatabase = async () => {
   try {
-    // Test database connection
     await pool.query('SELECT NOW()');
     console.log('Database connected successfully');
-    
-    // Create tables if they don't exist
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
